@@ -1,3 +1,23 @@
+
+Conversation opened. 1 unread message.
+
+Skip to content
+Using 5Kay Solutions Inc., Mail with screen readers
+
+1 of 4,911
+specflow module
+External
+Inbox
+
+Michael Visee
+Attachments
+4:44 PM (6 minutes ago)
+to me
+
+specflo.py attached
+
+ One attachment
+  •  Scanned by Gmail
 import sys
 
 import openpyxl
@@ -36,9 +56,22 @@ def cell_value(cell, is_input):
 
 def parse_json_input(filename, request_sheet):
     inputs = []
+    opening_row = None
+    closing_row = None
+    for row_index in range(1, request_sheet.max_row + 1):
+        json_element = cell_value_as_string(request_sheet.cell(row_index, 1))
+        if json_element is not None:
+            json_element = json_element.strip()
+            if json_element == '{':
+                opening_row = row_index
+            if json_element == '}':
+                closing_row = row_index
+    if opening_row is None or closing_row is None:
+        print("Missing opening or closing bracket in json request fot file {0}".format(filename), file=sys.stderr)
+        return None
     for column_index in range(2, request_sheet.max_column + 1):
         properties = []
-        for row_index in range(3, request_sheet.max_row):
+        for row_index in range(opening_row + 1, closing_row):
             input_value = cell_value(request_sheet.cell(row_index, column_index), True)
             if input_value is not None:
                 properties.append(cell_value_as_string(request_sheet.cell(row_index, 1))
@@ -119,6 +152,8 @@ def parse_testcase(filename, workbook, row):
         return None
     inputs = INPUT_PARSERS[request_type](filename, request_sheet)
     outputs = parse_output(filename, validation_sheet)
+    if inputs is None or outputs is None:
+        return None
     return TestCase(name, inputs, outputs, parameters, INPUT_TYPES[request_type])
 
 
@@ -155,7 +190,7 @@ class TestCase:
             lines.append('{0} I validate that the "{1}" should be "{2}"'.format(prefix, expression, value))
         return input_name[:input_name.find('_')], '\n'.join(lines)
 
-
+    
 Sp1
 
 import argparse
