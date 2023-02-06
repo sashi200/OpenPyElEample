@@ -153,7 +153,7 @@ class TestCase:
             prefix = 'THEN' if index == 0 else 'AND'
             expression, value = outputs[index]
             lines.append('{0} I validate that the "{1}" should be "{2}"'.format(prefix, expression, value))
-        return input_name.replace(' ', '_'), '\n'.join(lines)
+        return input_name[:input_name.find('_')], '\n'.join(lines)
 
 
 Sp1
