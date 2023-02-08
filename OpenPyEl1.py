@@ -1,23 +1,3 @@
-
-Conversation opened. 1 unread message.
-
-Skip to content
-Using 5Kay Solutions Inc., Mail with screen readers
-
-1 of 4,911
-specflow module
-External
-Inbox
-
-Michael Visee
-Attachments
-4:44 PM (6 minutes ago)
-to me
-
-specflo.py attached
-
- One attachment
-  •  Scanned by Gmail
 import sys
 
 import openpyxl
@@ -67,7 +47,7 @@ def parse_json_input(filename, request_sheet):
             if json_element == '}':
                 closing_row = row_index
     if opening_row is None or closing_row is None:
-        print("Missing opening or closing bracket in json request fot file {0}".format(filename), file=sys.stderr)
+        print("Missing opening or closing bracket in json request for file {0}".format(filename), file=sys.stderr)
         return None
     for column_index in range(2, request_sheet.max_column + 1):
         properties = []
@@ -110,7 +90,7 @@ def parse_output(filename, validation_sheet):
     outputs = []
     for column_index in range(2, validation_sheet.max_column + 1):
         properties = []
-        for row_index in range(3, validation_sheet.max_row):
+        for row_index in range(2, validation_sheet.max_row + 1):
             output_value = cell_value(validation_sheet.cell(row_index, column_index), False)
             if output_value is not None:
                 properties.append((cell_value_as_string(validation_sheet.cell(row_index, 1)), output_value))
@@ -187,10 +167,13 @@ class TestCase:
         for index in range(0, len(outputs)):
             prefix = 'THEN' if index == 0 else 'AND'
             expression, value = outputs[index]
-            lines.append('{0} I validate that the "{1}" should be "{2}"'.format(prefix, expression, value))
-        return input_name[:input_name.find('_')], '\n'.join(lines)
-
-    
+            if expression.lower().strip().startswith('response code'):
+                lines.append('{0} I validate that the Response Code should be {1}'
+                             .format(prefix, value))
+            else:
+                lines.append('{0} I validate that the {1} path expression "{2}" should be "{3}"'
+                             .format(prefix, self.request_type, expression, value))
+        return input_name[:input_name.find('_')], '\n'.join(lines)    
 Sp1
 
 import argparse
@@ -219,3 +202,38 @@ with os.scandir(input_path) as input_dir:
                     for scenario_name, scenario in testcase.scenarios():
                         with open(os.path.join(testcase_dir, scenario_name + '.feature'), "w") as scenario_file:
                             print(scenario, file=scenario_file)
+                 
+                 
+
+                 
+import org.junit.jupiter.api.Test;
+import org.w3c.dom.Node;
+import org.xmlunit.assertj3.XmlAssert;
+import org.xmlunit.builder.Input;
+import org.xmlunit.xpath.JAXPXPathEngine;
+
+import java.util.ArrayList;
+import java.util.List;
+
+public class XmlUnitTest {
+
+    private JAXPXPathEngine xpathEngine;
+
+    @Test
+    public void example() {
+        xpathEngine = new JAXPXPathEngine();
+
+        String controlXml = "<int>3</int><boolean>false</boolean>";
+        String responseXml = "<root>   <struct>   <int>3</int><boolean>   false</boolean>\n</struct></root>";
+
+        String xpathSelector = "/root/struct[child::int = '3']";
+        List<Node> nodes = new ArrayList<>();
+        xpathEngine.selectNodes(xpathSelector, Input.from(responseXml).build()).forEach(nodes::add);
+        String nodeName = nodes.get(0).getNodeName();
+        String controlXml2 = String.format("<%s>%s</%s>", nodeName, controlXml, nodeName);
+        XmlAssert.assertThat(nodes.get(0)).and(controlXml2)
+                .ignoreWhitespace()
+                .areSimilar();
+    }
+
+}
