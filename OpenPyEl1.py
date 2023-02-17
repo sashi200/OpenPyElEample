@@ -154,18 +154,29 @@ class TestCase:
     def scenarios(self):
         return tuple(self.scenario(sc_input, sc_output) for sc_input, sc_output in zip(self.inputs, self.outputs))
 
+    def feature(self):
+        scenarios = ['Feature: {0}'.format(self.name)]
+        for sc_input, sc_output in zip(self.inputs, self.outputs):
+            scenarios.append(self.scenario(sc_input, sc_output))
+        return '\n\n'.join(scenarios)
+
     def scenario(self, sc_input, sc_output):
         input_name, body = sc_input
-        lines = ['Feature: SpectrumAPI',
-                 '',
-                 'Scenario: {0}'.format(self.name),
+        if self.name.startswith('S_'):
+            annotation = '@SmokeTest\n'
+        elif self.name.startswith('R_'):
+            annotation = '@RegressionTest\n'
+        else:
+            annotation = ''  
+        lines = ['{0}Scenario: {1}'.format(annotation, input_name),
                  'Given I am a XMLWebservice client',
-                 'WHEN I Send a POST request to URL "{0}" with the following {1} body'
+                 'When I send a POST request to URL "{0}" with the following {1} body'
                  .format(self.parameters['URL'], self.request_type),
-                 body]
+                 body,
+                 'And Request Header is "{0}"'.format(self.parameters['RequestHeader'])]
         output_name, outputs = sc_output
         for index in range(0, len(outputs)):
-            prefix = 'THEN' if index == 0 else 'AND'
+            prefix = 'Then' if index == 0 else 'And'
             expression, value = outputs[index]
             if expression.lower().strip().startswith('response code'):
                 lines.append('{0} I validate that the Response Code should be {1}'
@@ -173,7 +184,8 @@ class TestCase:
             else:
                 lines.append('{0} I validate that the {1} path expression "{2}" should be "{3}"'
                              .format(prefix, self.request_type, expression, value))
-        return input_name[:input_name.find('_')], '\n'.join(lines)    
+        return '\n'.join(lines)
+
 Sp1
 
 import argparse
@@ -197,11 +209,11 @@ with os.scandir(input_path) as input_dir:
             file_name = entry.name[:-5]
             for testcase in specflow.parse_workbook(os.path.join(input_path, entry.name)):
                 if testcase is not None:
-                    testcase_dir = os.path.join(output_path, file_name, testcase.name)
+                    testcase_dir = os.path.join(output_path, file_name)
                     os.makedirs(testcase_dir, exist_ok=True)
-                    for scenario_name, scenario in testcase.scenarios():
-                        with open(os.path.join(testcase_dir, scenario_name + '.feature'), "w") as scenario_file:
-                            print(scenario, file=scenario_file)
+                    with open(os.path.join(testcase_dir, testcase.name + '.feature'), "w") as feature_file:
+                        print(testcase.feature(), file=feature_file)
+
                  
                  
 
